@@ -22,6 +22,7 @@ module video_pattern_generator_wrapper
     input		logic		[SYS_REG_WIDTH - 1 : 0  ]       requested_rows_del_after    ,   // Requested number of rows to be delayed
     input		logic		[SYS_REG_WIDTH - 1 : 0  ]       requested_rows_del_after    ,   // Requested number of rows to be delayed
     input		logic		[SYS_REG_WIDTH - 1 : 0  ]       requested_v_sync_duration   ,   // Number of ticks to hold vsync active high
+    input		logic		[3                 : 0  ]       requested_data_pattern      ,   // Requested pattren type to be generated
 
     //Output signals
     output		logic		                                sig_out_vsync               ,   //V-Sync active-high signal for syncronization
@@ -43,6 +44,7 @@ logic [SYS_REG_WIDTH - 1 : 0  ]     requested_cols_del_after_reg        ;   // R
 logic [SYS_REG_WIDTH - 1 : 0  ]     requested_rows_del_after_reg        ;   // Reg for the requested number of rows to be generateds
 logic [SYS_REG_WIDTH - 1 : 0  ]     requested_rows_del_after_reg        ;   // Reg for the requested number of rows to be generateds
 logic [SYS_REG_WIDTH - 1 : 0  ]     requested_v_sync_duration_reg       ;   // Reg for the requested number of rows to be generateds
+logic [3                 : 0  ]     requested_data_pattern_reg          ;   // Requested pattren type to be generated
 
 //Counters to generate patterns
 logic [SYS_REG_WIDTH - 1 : 0  ]     requested_cols_gen_cnt              ;   // Counter for the requested number of colomns to be generated
@@ -98,13 +100,14 @@ always_ff @(posedge clk)
 begin
     if(!enable)
         begin
-            requested_cols_gen_reg          <=  requested_cols_gen           ;
-            requested_rows_gen_reg          <=  requested_rows_gen           ;
-            requested_cols_del_before_reg   <=  requested_cols_del_before    ;
-            requested_rows_del_before_reg   <=  requested_rows_del_before    ;
-            requested_cols_del_after_reg    <=  requested_cols_del_after     ;
-            requested_rows_del_after_reg    <=  requested_rows_del_after     ;
-            requested_v_sync_duration_reg   <=  requested_v_sync_duration    ;
+            requested_cols_gen_reg          <=  requested_cols_gen              ;
+            requested_rows_gen_reg          <=  requested_rows_gen              ;
+            requested_cols_del_before_reg   <=  requested_cols_del_before       ;
+            requested_rows_del_before_reg   <=  requested_rows_del_before       ;
+            requested_cols_del_after_reg    <=  requested_cols_del_after        ;
+            requested_rows_del_after_reg    <=  requested_rows_del_after        ;
+            requested_v_sync_duration_reg   <=  requested_v_sync_duration       ;
+            requested_data_pattern_reg      <=  requested_data_pattern          ;
         end
 end
 //End of driving counters section
@@ -202,5 +205,31 @@ begin
         end
 end
 //End of hsync section
+//^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+
+//vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv
+//Begin of data pattern generation section
+always_ff @(posedge clk)
+begin
+    if(!enable)
+        begin
+            sig_out_data <= '0;
+        end
+    else
+        begin
+            case (requested_data_pattern_reg)
+                INSERTCASE:
+                    begin
+                        
+                    end
+                default:
+                    begin
+                        
+                    end
+            endcase
+        end
+end
+//End of data pattern generation section
 //^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 endmodule
