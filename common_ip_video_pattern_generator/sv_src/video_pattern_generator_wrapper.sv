@@ -21,6 +21,7 @@ module video_pattern_generator_wrapper
     input		logic		[SYS_REG_WIDTH - 1 : 0  ]       requested_cols_del_after    ,   // Requested number of colomns to be delayed
     input		logic		[SYS_REG_WIDTH - 1 : 0  ]       requested_rows_del_after    ,   // Requested number of rows to be delayed
     input		logic		[SYS_REG_WIDTH - 1 : 0  ]       requested_rows_del_after    ,   // Requested number of rows to be delayed
+    input		logic		[SYS_REG_WIDTH - 1 : 0  ]       requested_v_sync_duration   ,   // Number of ticks to hold vsync active high
 
     //Output signals
     output		logic		                                sig_out_vsync               ,   //V-Sync active-high signal for syncronization
@@ -34,16 +35,19 @@ module video_pattern_generator_wrapper
 //Begin of local signals and parameters section
 
 //Registers to latch
-logic [clogb2 (CNT_COLS        ) - 1 : 0]   requested_cols_gen_reg            ;   // Reg for the requested number of colomns to be generated
-logic [clogb2 (CNT_ROWS        ) - 1 : 0]   requested_rows_gen_reg            ;   // Reg for the requested number of rows to be generated
-logic [clogb2 (CNT_COLS_DEL    ) - 1 : 0]   requested_cols_del_before_reg     ;   // Reg for the requested number of colomns to be generated
-logic [clogb2 (CNT_ROWS_DEL    ) - 1 : 0]   requested_rows_del_before_reg     ;   // Reg for the requested number of rows to be generateds
-logic [clogb2 (CNT_COLS_DEL    ) - 1 : 0]   requested_cols_del_after_reg      ;   // Reg for the requested number of colomns to be generated
-logic [clogb2 (CNT_ROWS_DEL    ) - 1 : 0]   requested_rows_del_after_reg      ;   // Reg for the requested number of rows to be generateds
+logic [SYS_REG_WIDTH - 1 : 0  ]     requested_cols_gen_reg              ;   // Reg for the requested number of colomns to be generated
+logic [SYS_REG_WIDTH - 1 : 0  ]     requested_rows_gen_reg              ;   // Reg for the requested number of rows to be generated
+logic [SYS_REG_WIDTH - 1 : 0  ]     requested_cols_del_before_reg       ;   // Reg for the requested number of colomns to be generated
+logic [SYS_REG_WIDTH - 1 : 0  ]     requested_rows_del_before_reg       ;   // Reg for the requested number of rows to be generateds
+logic [SYS_REG_WIDTH - 1 : 0  ]     requested_cols_del_after_reg        ;   // Reg for the requested number of colomns to be generated
+logic [SYS_REG_WIDTH - 1 : 0  ]     requested_rows_del_after_reg        ;   // Reg for the requested number of rows to be generateds
+logic [SYS_REG_WIDTH - 1 : 0  ]     requested_rows_del_after_reg        ;   // Reg for the requested number of rows to be generateds
+logic [SYS_REG_WIDTH - 1 : 0  ]     requested_v_sync_duration_reg       ;   // Reg for the requested number of rows to be generateds
 
 //Counters to generate patterns
-logic [clogb2 (CNT_COLS        ) : 0]       requested_cols_gen_cnt            ;   // Counter for the requested number of colomns to be generated
-logic [clogb2 (CNT_ROWS        ) : 0]       requested_rows_gen_cnt            ;   // Counter for the requested number of rows to be generated
+logic [SYS_REG_WIDTH - 1 : 0  ]     requested_cols_gen_cnt              ;   // Counter for the requested number of colomns to be generated
+logic [SYS_REG_WIDTH - 1 : 0  ]     requested_rows_gen_cnt              ;   // Counter for the requested number of rows to be generated
+logic [SYS_REG_WIDTH - 1 : 0  ]     requested_v_sync_duration_cnt       ;   // Counter for the requested number of rows to be generated
 
 //End of local signals and parameters section
 //^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -100,6 +104,7 @@ begin
             requested_rows_del_before_reg   <=  requested_rows_del_before    ;
             requested_cols_del_after_reg    <=  requested_cols_del_after     ;
             requested_rows_del_after_reg    <=  requested_rows_del_after     ;
+            requested_v_sync_duration_reg   <=  requested_v_sync_duration    ;
         end
 end
 //End of driving counters section
@@ -136,18 +141,66 @@ end
 
 
 //vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv
-//Begin of driving section
+//Begin of driving sig_out_vsync section
 always_ff @(posedge clk)
 begin
     if(!enable)
         begin
-            
+            requested_v_sync_duration_cnt <= '0;
+            sig_out_vsync <= '0;
         end
     else
         begin
-        
+            if(requested_v_sync_duration_cnt == requested_v_sync_duration_reg) begin
+                sig_out_vsync <= '1;
+            end
+            else begin
+                requested_v_sync_duration_cnt <= requested_v_sync_duration_cnt + 1;
+            end
         end
 end
-//End of driving section
+//End of driving sig_out_vsync section
+//^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+
+//vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv
+//Begin of hsync and related signals section
+always_ff @(posedge clk)
+begin
+    if(!enable)
+        begin
+            sig_out_hsync <= '0;
+            sig_out_hsync_first <= '0;
+            sig_out_hsync_last <= '0;
+        end
+    else
+        begin
+            if ((requested_rows_gen_cnt >= requested_rows_del_before_reg) && 
+            (requested_rows_gen_cnt < requested_rows_del_before_reg + requested_rows_gen_reg)) begin
+                if((requested_cols_gen_cnt >= requested_cols_del_before_reg) && 
+                (requested_cols_gen_cnt < requested_cols_del_before_reg + requested_cols_gen_reg))begin
+                    sig_out_hsync <= '1;
+                end
+
+                if(requested_cols_gen_cnt == requested_cols_del_before_reg) begin
+                    sig_out_hsync_first <= '1;
+                end
+                else begin
+                    sig_out_hsync_first <= '0;
+                end
+
+                if(requested_cols_gen_cnt == requested_cols_del_before_reg + requested_cols_gen_reg - 1) begin
+                    sig_out_hsync_last <= '1;
+                end
+                else begin
+                    sig_out_hsync_last <= '0;
+                end
+            end
+            else begin
+                sig_out_hsync <= '0;
+            end
+        end
+end
+//End of hsync section
 //^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 endmodule
