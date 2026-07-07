@@ -128,8 +128,8 @@ begin
             requested_rows_del_after_reg        <=  requested_rows_del_after        ;
             requested_v_sync_duration_reg       <=  requested_v_sync_duration       ;
             requested_data_pattern_reg          <=  requested_data_pattern          ;
-            requested_level_white_reg           <=  requested_level_white_reg       ;
-            requested_level_black_reg           <=  requested_level_black_reg       ;
+            requested_level_white_reg           <=  requested_level_white           ;
+            requested_level_black_reg           <=  requested_level_black           ;
             requested_level_intermediate_reg    <=  requested_level_intermediate    ;
             requested_horizontal_step_reg       <=  requested_horizontal_step       ;
             requested_vertical_step_reg         <=  requested_vertical_step         ;
@@ -179,10 +179,11 @@ begin
         end
     else
         begin
-            if(requested_v_sync_duration_cnt == requested_v_sync_duration_reg) begin
-                sig_out_vsync <= '1;
+            if(requested_v_sync_duration_cnt == requested_v_sync_duration_reg - 1) begin
+                sig_out_vsync <= '0;
             end
             else begin
+                sig_out_vsync <= '1;
                 requested_v_sync_duration_cnt <= requested_v_sync_duration_cnt + 1;
             end
         end
@@ -208,6 +209,9 @@ begin
                 if((requested_cols_gen_cnt >= requested_cols_del_before_reg) && 
                 (requested_cols_gen_cnt < requested_cols_del_before_reg + requested_cols_gen_reg))begin
                     sig_out_hsync <= '1;
+                end
+                else begin
+                    sig_out_hsync <= '0;
                 end
 
                 if(requested_cols_gen_cnt == requested_cols_del_before_reg) begin
