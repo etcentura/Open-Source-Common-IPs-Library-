@@ -151,6 +151,7 @@ initial begin : main
     current_file_idx = 0;
     $display(">>> Dump image array size is %d", $size(dump_file_paths));
     for (current_file_idx = 0; current_file_idx < $size(dump_file_paths); current_file_idx++) begin
+        requested_data_pattern <= current_file_idx;
         $display(">>> Current file to open %d in the name of %s", current_file_idx, dump_file_paths[current_file_idx]);
         current_file_descriptor = $fopen(dump_file_paths[current_file_idx], "w");
         $display(">>> Current descriptor %d", current_file_descriptor);
