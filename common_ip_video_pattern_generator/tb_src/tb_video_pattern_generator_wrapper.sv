@@ -6,7 +6,7 @@ module tb_video_pattern_generator_wrapper();
 //Begin of declaring local signals and parameters section
 
 parameter   int     SYS_REG_WIDTH           =	32                                  ;   // Width of setup registers
-parameter   int     OUT_DATA_WIDTH          =	16                                  ;   // Width of the data output
+parameter   int     OUT_DATA_WIDTH          =	8                                   ;   // Width of the data output
 
 //Basic signals declaration 
 logic		                                clk                                     ;   // Basic clk signal
@@ -33,9 +33,41 @@ logic		                                sig_out_hsync_first                     ;
 logic		                                sig_out_hsync_last                      ;   //H-Sync active-high signal as if valid data flag for the last data beat
 logic		[OUT_DATA_WIDTH - 1 : 0  ] 	    sig_out_data                            ;   //Output data marked with the hsync and first and last data markers
 
-//TB signals
+//TB signals and vars
 int                                         total_pixels_to_generate                ;
 int                                         total_pixels_generated                  ;
+bit                                         flag_to_gather_pixels                   ;
+string                                      dump_file_paths[]                       ;
+int                                         current_file_idx                        ;
+int                                         current_file_descriptor                 ;
+
+
+/*
+Table of the patterns which can be requested to generate the test video
+PATTERN NUMBER      NAME                    DEFINITION
+0                   ALL_BLACK               Generate all pixels as black pixels (requested_level_black)
+1                   ALL_WHITE               Generate all pixels as white pixels (requested_level_white)
+2                   ALL_INTERMEDIATE        Generate all pixels as intermediate level (requested_level_intermediate)
+3                   CHECKER_ROWS            Generate rows as black-white-black-white-etc levels with the selected horizontal step
+4                   CHECKER_COLS            Generate cols as black-white-black-white-etc levels with the selected vertical step
+5                   CHECKER_IMAGE           Generate the checker board with the selected horizontal adn vertical steps for the correlated sizes of the tiles
+6                   GRADIENT_HORIZONTAL     Generate horizontal gradient pattern
+7                   GRADIENT_VERTICAL       Generate vertical gradient pattern
+8                   GRADIENT_XORED          Generate XORed gradient pattern
+*/
+assign dump_file_paths = {
+                           "../../../../../../tb_dump_data/all_white.data",
+                           "../../../../../../tb_dump_data/all_black.data",
+                           "../../../../../../tb_dump_data/all_intermediate.data",
+                           "../../../../../../tb_dump_data/checker_rows.data",
+                           "../../../../../../tb_dump_data/checker_cols.data",
+                           "../../../../../../tb_dump_data/checker_image.data",
+                           "../../../../../../tb_dump_data/checker_horizontal.data",
+                           "../../../../../../tb_dump_data/checker_vertical.data",
+                           "../../../../../../tb_dump_data/checker_xored.data",
+                           "../../../../../../tb_dump_data/non_existing.data"
+                        };
+
 //End of declaring local signals and parameters section
 //^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
@@ -116,21 +148,51 @@ initial begin : main
     total_pixels_to_generate        = (requested_cols_del_before + requested_cols_del_after + requested_cols_gen) *
                                         (requested_rows_del_before + requested_rows_gen + requested_rows_del_after);
     total_pixels_generated = 0;
-
-    repeat(100) @(posedge clk);
-    enable <= '1;
-    while(1) begin
-        @(posedge clk);
-        total_pixels_generated <= total_pixels_generated + 1;
-        if(total_pixels_generated == total_pixels_to_generate - 1) begin
-            break;
-        end
+    current_file_idx = 0;
+    $display(">>> Dump image array size is %d", $size(dump_file_paths));
+    for (current_file_idx = 0; current_file_idx < $size(dump_file_paths); current_file_idx++) begin
+        $display(">>> Current file to open %d in the name of %s", current_file_idx, dump_file_paths[current_file_idx]);
+        current_file_descriptor = $fopen(dump_file_paths[current_file_idx], "w");
+        $display(">>> Current descriptor %d", current_file_descriptor);
+        repeat(100) @(posedge clk);
+        enable <= '1;
+        while(1) begin
+            @(posedge clk);
+            total_pixels_generated <= total_pixels_generated + 1;
+            if(total_pixels_generated == total_pixels_to_generate - 1) begin
+                enable <= '0;
+                total_pixels_generated <= 0;
+                $fclose(current_file_descriptor);
+                break;
+            end
+        end 
     end
-    enable = '0;
-    total_pixels_generated = 0;
-
+    $display(">>>>> Succsess!");
     $finish();
 end
 //End of generating main scenario section
+//^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+
+//vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv
+//Begin of dumping data into the files section
+initial begin
+    while (1) begin
+        @(posedge clk);
+        if(enable) begin
+            if(current_file_descriptor != 0) begin
+                if (sig_out_hsync) begin
+                    $fwrite(current_file_descriptor, "%c", sig_out_data);
+                end
+            end
+            else begin
+                $fatal("Failed to capture dump file");
+                $finish();
+            end
+        end
+        
+    end
+end
+//End of dumping data into the files section
 //^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 endmodule
