@@ -255,7 +255,7 @@ begin
                 (requested_rows_gen_cnt < requested_rows_del_before_reg + requested_rows_gen_reg)) begin
                     
                     if(requested_cols_gen_cnt == requested_cols_del_before_reg + requested_cols_gen_reg + requested_cols_del_after_reg - 1) begin
-                        if (requested_rows_step_counter == requested_horizontal_step_reg - 1) begin
+                        if (requested_rows_step_counter >= requested_horizontal_step_reg - 1) begin
                             requested_rows_step_counter <= '0;
                             requested_rows_step_flag    <= ~requested_rows_step_flag;
                         end
@@ -287,7 +287,7 @@ begin
                     if((requested_cols_gen_cnt >= requested_cols_del_before_reg) && 
                         (requested_cols_gen_cnt < requested_cols_del_before_reg + requested_cols_gen_reg))begin
                         
-                        if(requested_cols_gen_cnt == requested_vertical_step_reg - 1) begin
+                        if(requested_cols_step_counter >= requested_vertical_step_reg - 1) begin
                             requested_cols_step_counter <= '0;
                             requested_cols_step_flag    <= ~requested_cols_step_flag;
                         end
@@ -330,7 +330,7 @@ begin
                             sig_out_data <= requested_cols_step_flag ? requested_level_black_reg : requested_level_white_reg                            ; 
                     end
                 GRADIENT_HORIZONTAL: sig_out_data <= requested_cols_step_counter[OUT_DATA_WIDTH-1:0]                                                    ;
-                GRADIENT_VERTICAL:  sig_out_data <= requested_rows_step_counter[OUT_DATA_WIDTH-1:0]                                                     ;
+                GRADIENT_VERTICAL: sig_out_data <= requested_rows_step_counter[OUT_DATA_WIDTH-1:0]                                                      ;
                 GRADIENT_XORED: sig_out_data <= requested_cols_step_counter[OUT_DATA_WIDTH-1:0] ^ requested_rows_step_counter[OUT_DATA_WIDTH-1:0]       ;
                 default: //If no corret pattern found - generating black level
                     begin
