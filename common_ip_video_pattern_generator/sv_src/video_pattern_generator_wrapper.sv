@@ -76,9 +76,6 @@ PATTERN NUMBER      NAME                    DEFINITION
 3                   CHECKER_ROWS            Generate rows as black-white-black-white-etc levels with the selected horizontal step
 4                   CHECKER_COLS            Generate cols as black-white-black-white-etc levels with the selected vertical step
 5                   CHECKER_IMAGE           Generate the checker board with the selected horizontal adn vertical steps for the correlated sizes of the tiles
-6                   GRADIENT_HORIZONTAL     Generate horizontal gradient pattern
-7                   GRADIENT_VERTICAL       Generate vertical gradient pattern
-8                   GRADIENT_XORED          Generate XORed gradient pattern
 */
 
 
@@ -262,6 +259,7 @@ begin
                         else begin
                             requested_rows_step_counter <= requested_rows_step_counter + 1;
                         end
+                        
                     end
             end
             else begin
@@ -294,6 +292,7 @@ begin
                         else begin
                             requested_cols_step_counter <= requested_cols_step_counter + 1;
                         end
+                        
                     end
                     else begin
                         requested_cols_step_counter <= '0;
@@ -329,9 +328,6 @@ begin
                         else
                             sig_out_data <= requested_cols_step_flag ? requested_level_black_reg : requested_level_white_reg                            ; 
                     end
-                GRADIENT_HORIZONTAL: sig_out_data <= requested_cols_step_counter[OUT_DATA_WIDTH-1:0]                                                    ;
-                GRADIENT_VERTICAL: sig_out_data <= requested_rows_step_counter[OUT_DATA_WIDTH-1:0]                                                      ;
-                GRADIENT_XORED: sig_out_data <= requested_cols_step_counter[OUT_DATA_WIDTH-1:0] ^ requested_rows_step_counter[OUT_DATA_WIDTH-1:0]       ;
                 default: //If no corret pattern found - generating black level
                     begin
                         sig_out_data <= requested_level_black_reg                                                                                       ;

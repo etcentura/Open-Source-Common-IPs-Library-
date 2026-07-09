@@ -50,9 +50,6 @@ PATTERN NUMBER      NAME                    DEFINITION
 3                   CHECKER_ROWS            Generate rows as black-white-black-white-etc levels with the selected horizontal step
 4                   CHECKER_COLS            Generate cols as black-white-black-white-etc levels with the selected vertical step
 5                   CHECKER_IMAGE           Generate the checker board with the selected horizontal adn vertical steps for the correlated sizes of the tiles
-6                   GRADIENT_HORIZONTAL     Generate horizontal gradient pattern
-7                   GRADIENT_VERTICAL       Generate vertical gradient pattern
-8                   GRADIENT_XORED          Generate XORed gradient pattern
 */
 assign dump_file_paths = {
                            "../../../../../../tb_dump_data/all_white.data",             // 0
@@ -61,10 +58,7 @@ assign dump_file_paths = {
                            "../../../../../../tb_dump_data/checker_rows.data",          // 3
                            "../../../../../../tb_dump_data/checker_cols.data",          // 4
                            "../../../../../../tb_dump_data/checker_image.data",         // 5
-                           "../../../../../../tb_dump_data/gradient_horizontal.data",   // 6
-                           "../../../../../../tb_dump_data/gradient_vertical.data",     // 7
-                           "../../../../../../tb_dump_data/gradient_xored.data",        // 8
-                           "../../../../../../tb_dump_data/non_existing.data"           // 9
+                           "../../../../../../tb_dump_data/non_existing.data"           // 6
                         };
 
 
@@ -148,8 +142,8 @@ initial begin : main
     
     total_pixels_to_generate        = (requested_cols_del_before + requested_cols_del_after + requested_cols_gen) *
                                         (requested_rows_del_before + requested_rows_gen + requested_rows_del_after);
-    total_pixels_generated = 0;
-    current_file_idx = 0;
+    total_pixels_generated          = 0        ;
+    current_file_idx                = 0        ;
     $display(">>> Dump image array size is %d", $size(dump_file_paths));
 
     for (current_file_idx = 0; current_file_idx < $size(dump_file_paths); current_file_idx++) begin
@@ -158,17 +152,12 @@ initial begin : main
         $display(">>> Current file to open %d in the name of %s", current_file_idx, dump_file_paths[current_file_idx]);
         current_file_descriptor = $fopen(dump_file_paths[current_file_idx], "w");
         $display(">>> Current descriptor %d", current_file_descriptor);
-
-        case (current_file_idx)
-            6:          requested_horizontal_step <= 1;
-            7:          requested_vertical_step <= 1;
-        endcase
-
+        
         repeat(100) @(posedge clk);
         enable <= '1;
         while(1) begin
             @(posedge clk);
-            total_pixels_generated <= total_pixels_generated + 1;
+            total_pixels_generated = total_pixels_generated + 1;
             if(total_pixels_generated == total_pixels_to_generate - 1) begin
                 enable <= '0;
                 total_pixels_generated <= 0;
