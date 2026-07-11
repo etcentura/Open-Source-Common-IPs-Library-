@@ -40,21 +40,11 @@ end
 
 //vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv
 //Begin of main signal processing section
-always_ff @(posedge clk or negedge rst_n)
+always_ff @(posedge clk)
 begin
-    if(!rst_n)
+    for (int i = 0; i < SIGNAL_WIDTH; i++)
         begin
-            for (int i = 0; i < SIGNAL_WIDTH; i++)
-                begin
-                    signal_reg[i]  <= '0;
-                end
-        end
-    else
-        begin
-            for (int i = 0; i < SIGNAL_WIDTH; i++)
-                begin
-                    signal_reg[i]  <= signal_in[i];
-                end
+            signal_reg[i]  <= signal_in[i];
         end
 end
 
